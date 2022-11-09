@@ -4,6 +4,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,13 +15,14 @@ import java.util.concurrent.TimeoutException;
 public class Consumer {
   private final static String QUEUE_NAME = "threadQ";
   static protected CountDownLatch latch = new CountDownLatch(16);
+  static protected ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
 
   public static void main(String[] args) throws IOException, TimeoutException, InterruptedException {
     ConnectionFactory factory = new ConnectionFactory();
     factory.setUsername("username");
     factory.setPassword("970422");
     factory.setVirtualHost("/");
-    factory.setHost("35.90.145.233");
+    factory.setHost("18.237.62.10");
     factory.setPort(5672);
 
     final Connection connection = factory.newConnection();
@@ -37,6 +39,8 @@ public class Consumer {
           String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
           channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
           System.out.println( "Callback thread ID = " + Thread.currentThread().getId() + " Received '" + message + "'");
+          //save to thread safe hashmap!
+          map.put(consumerTag, message);
         };
         // process messages
         channel.basicConsume(QUEUE_NAME, false, deliverCallback, consumerTag -> { });
